@@ -1,16 +1,19 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+#include <iostream>
 
-int main(int argc, char **argv)
+#pragma comment(lib, "Ws2_32.lib")
+
+int main(void)
 {
     int iResult;
     WSADATA wsaData;
-    struct sockaddr_in client;
+    sockaddr_in client;
 
     // Starting Windows Socket API
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult == 1)
+    if (iResult != NO_ERROR)
     {
         wprintf(L"%d\n", WSAGetLastError());
         return 1;
@@ -21,24 +24,25 @@ int main(int argc, char **argv)
     client.sin_port = htons(9090);
     inet_pton(AF_INET, "127.0.0.1", &client.sin_addr);
 
+    std::cout << "Initialised " << std::endl;
     // Initialise socket for connection
     SOCKET connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (connectSocket == SOCKET_ERROR)
     {
-        wprintf(L"%d\n", WSAGetLastError());
+        wprintf(L"%ld\n", WSAGetLastError());
         WSACleanup();
     }
 
     // To Connect with Server
-    if (connect(connectSocket, (struct sockadde *)&client, sizeof(client)) == SOCKET_ERROR)
+    if (connect(connectSocket, (struct sockaddr *)&client, sizeof(client)) == SOCKET_ERROR)
     {
-        wprintf(L"%d\n", WSAGetLastError());
+        wprintf(L"%ld\n", WSAGetLastError());
         closesocket(connectSocket);
         WSACleanup();
     }
     else
     {
-        wprintf(L"Success\n");
+        std::cout << "Connected" << std::endl;
     }
 
     return 0;

@@ -1,17 +1,22 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+#include <iostream>
 
-int main(int argc, char **argv)
+#pragma comment(lib, "Ws2_32.lib")
+
+int main(void)
 {
     WSADATA wsaData;
 
     int iResult;
-    struct sockaddr_in server;
+    sockaddr_in server;
 
+    // Initialise the windows socket API
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult == ERROR)
+    if (iResult != NO_ERROR)
     {
+        wprintf(L"%ld \n", WSAGetLastError());
         return 1;
     }
 
@@ -26,47 +31,46 @@ int main(int argc, char **argv)
     listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listenSocket == INVALID_SOCKET)
     {
-        wprintf(L"%d\n", WSAGetLastError());
+        wprintf(L"%ld\n", WSAGetLastError());
         WSACleanup();
     }
 
     // binds the socket to the server struct
     if (bind(listenSocket, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
     {
-        wprintf(L"%d\n", WSAGetLastError());
+        wprintf(L"%ld\n", WSAGetLastError());
         closesocket(listenSocket);
         WSACleanup();
     }
+    std::cout << "[BINDED] server binded with socket" << std::endl;
 
     // listening
     if (listen(listenSocket, 1) == SOCKET_ERROR)
     {
-        wprintf(L"%d\n", WSAGetLastError());
+        wprintf(L"%ld\n", WSAGetLastError());
         closesocket(listenSocket);
         WSACleanup();
     }
+    std::cout << "[LISTENING] socket is listening" << std::endl;
 
-    // calls accept function
-    acceptSocketFunc(listenSocket, &server);
-
-    return 0;
-}
-
-// TO accept Sockets
-int acceptSocketFunc(SOCKET ls, struct sockaddr_in *s)
-{
     SOCKET acceptSocket;
 
-    acceptSocket = accept(ls, NULL, NULL);
-    if (acceptSocket == INVALID_SOCKET)
+    while (true)
     {
-        wprintf("%d\n", WSAGetLastError());
-        closesocket(ls);
-        WSACleanup();
+        std::cout << "[ACCEPTING] waiting for client" << std::endl;
+        acceptSocket = accept(listenSocket, NULL, NULL);
+        if (acceptSocket == INVALID_SOCKET)
+        {
+            wprintf(L"%ld \n", WSAGetLastError());
+            closesocket(listenSocket);
+            WSACleanup();
+        }
+
+        wprintf(L"%ld \n", WSAGetLastError());
+        std::cout << "[CONNECTED] client connected" << std::endl;
     }
 
-    wprintf(L"CLient connected\n");
-    closesocket(ls);
+    closesocket(listenSocket);
 
     return 0;
 }
